@@ -1,11 +1,9 @@
 import math
 import random
-import time
 
 import pygame
 import os
 import sys
-import asyncio
 
 FPS = 60
 WINDOW_SIZE = (500, 800)
@@ -15,6 +13,10 @@ PLAYER_ANIMATION = 'player_animation.png'
 PLAYER_ANIMATION_COLUMNS = 4
 PLAYER_ANIMATION_ROWS = 1
 ENEMY_FIRST_ANIMATION = 'GER_He111_animation.png'
+
+bullet_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
 
 
 def load_image(name, colorkey=None):
@@ -52,28 +54,32 @@ class AnimatedSprite(pygame.sprite.Sprite):
 class EnemyFirst(AnimatedSprite):
     image = load_image('GER_He111_animation.png')
 
-    def __init__(self, sheet, columns, rows, x, y, spawn_x, speed, all_sprites):
-        super().__init__(sheet, columns, rows, x, y, all_sprites)
-        self.all_sprites = all_sprites
+    def __init__(self, sheet, columns, rows, x, y, spawn_x, speed):
+        super().__init__(sheet, columns, rows, x, y, enemy_group)
         self.rect = self.image.get_rect()
         self.rect.bottom = -50
         self.rect.centerx = spawn_x
         self.speed = speed
 
     def shoot(self):
-        Bullet(self.rect.x, self.rect.y, 19, 15, self.all_sprites)
-        Bullet(self.rect.x, self.rect.y, 47, 15, self.all_sprites)
+        Bullet(self.rect.x, self.rect.y, 19, 15)
+        Bullet(self.rect.x, self.rect.y, 47, 15)
+
+    def destroy(self):
+        if pygame.sprite.spritecollide(self, bullet_group, True):
+            self.kill()
 
     def update(self):
         self.rect.bottom += self.speed
+        self.destroy()
 
 
 class Bullet(pygame.sprite.Sprite):
     BULLET_COLOR = (255, 255, 51)
     BULLET_SPEED = 10
 
-    def __init__(self, x, y, offset_x, offset_y, all_sprites):
-        super().__init__(all_sprites)
+    def __init__(self, x, y, offset_x, offset_y):
+        super().__init__(bullet_group)
         self.image = pygame.Surface([3, 10])
         pygame.draw.rect(self.image, Bullet.BULLET_COLOR, pygame.Rect(0, 0, 3, 10))
         self.rect = self.image.get_rect()
@@ -89,9 +95,8 @@ class Player(AnimatedSprite):
     MAX_SPEED = 10
 
     def __init__(self, sheet, columns, rows, x, y, acceleration, bullet_count, all_sprites):
-        super().__init__(sheet, columns, rows, x, y, all_sprites)
+        super().__init__(sheet, columns, rows, x, y, player_group)
         self.all_sprites = all_sprites
-        # self.image = Player.image
         self.rect = self.image.get_rect()
         self.rect.bottom = WINDOW_SIZE[1] - 50
         self.rect.centerx = WINDOW_SIZE[0] // 2
@@ -103,8 +108,8 @@ class Player(AnimatedSprite):
     def shoot(self):
         if self.bullet_count > 0:
             self.bullet_count -= 1
-            Bullet(self.rect.x, self.rect.y, 19, 15, self.all_sprites)
-            Bullet(self.rect.x, self.rect.y, 47, 15, self.all_sprites)
+            Bullet(self.rect.x, self.rect.y, 19, 15)
+            Bullet(self.rect.x, self.rect.y, 47, 15)
             print('shoot ')
 
     def check_max_speed(self):
@@ -142,17 +147,22 @@ class Player(AnimatedSprite):
             self.rect.x = 0
             self.velocity[0] = 0
 
+    def collision_check(self):
+        if pygame.sprite.spritecollide(self, enemy_group, True):
+            sys.exit(0)
+
     def move(self):
-        # print(self.velocity[0])
         self.rect.right += self.velocity[0]
         self.check_position()
-        # self.auto_acceleration_stop()
+        self.collision_check()
 
 
 class Game:
     def __init__(self, screen):
         self.all_sprites = pygame.sprite.Group()
+
         self.screen = screen
+
         self.player_key = None
         self.player_shoot_key = None
 
@@ -185,20 +195,26 @@ class Game:
                              rows=PLAYER_ANIMATION_ROWS, x=50, y=50, acceleration=(0.5, 0.5),
                              bullet_count=100, all_sprites=self.all_sprites)
         self.all_sprites.add(self.player)
-        # EnemyFirst(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, 6, self.all_sprites)
+        # EnemyFirst(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, 100, 6, self.all_sprites)
 
     def enemy_spawn(self):
         self.enemy_spawn_tick += self.enemy_spawn_clock.tick()
         enemy_spawn_max_tick = random.randint(500, 1500)
         if self.enemy_spawn_tick > enemy_spawn_max_tick:
             enemy_x = random.randint(20, WINDOW_SIZE[0] - 20)
-            EnemyFirst(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, enemy_x, 6, self.all_sprites)
+            EnemyFirst(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, enemy_x, 6)
             self.enemy_spawn_tick = 0
 
     def render(self):
         self.screen.fill(pygame.Color(0, 200, 0))
         self.all_sprites.update()
         self.all_sprites.draw(self.screen)
+        bullet_group.update()
+        bullet_group.draw(self.screen)
+        enemy_group.update()
+        enemy_group.draw(self.screen)
+        player_group.update()
+        player_group.draw(self.screen)
 
     def player_physic(self):
         # print(self.player_key)
