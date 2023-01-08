@@ -1,14 +1,20 @@
 import math
+import random
+import time
 
 import pygame
 import os
 import sys
+import asyncio
+
+FPS = 60
+WINDOW_SIZE = (500, 800)
 
 PLAYER_SPRITE = 'player_plane.png'
 PLAYER_ANIMATION = 'player_animation.png'
 PLAYER_ANIMATION_COLUMNS = 4
 PLAYER_ANIMATION_ROWS = 1
-WINDOW_SIZE = (800, 800)
+ENEMY_FIRST_ANIMATION = 'GER_He111_animation.png'
 
 
 def load_image(name, colorkey=None):
@@ -20,7 +26,7 @@ def load_image(name, colorkey=None):
     return image
 
 
-class PlayerAnimatedSprite(pygame.sprite.Sprite):
+class AnimatedSprite(pygame.sprite.Sprite):
     def __init__(self, sheet, columns, rows, x, y, all_sprites):
         super().__init__(all_sprites)
         self.frames = []
@@ -43,21 +49,42 @@ class PlayerAnimatedSprite(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
 
 
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, all_sprites):
-        super().__init__(all_sprites)
-        self.image = pygame.Surface([10, 10])
-        # self.image.fill((100,100,100))
-        pygame.draw.rect(self.image, (100, 100, 100), pygame.Rect(0, 0, 10, 10))
+class EnemyFirst(AnimatedSprite):
+    image = load_image('GER_He111_animation.png')
+
+    def __init__(self, sheet, columns, rows, x, y, spawn_x, speed, all_sprites):
+        super().__init__(sheet, columns, rows, x, y, all_sprites)
+        self.all_sprites = all_sprites
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.bottom = -50
+        self.rect.centerx = spawn_x
+        self.speed = speed
+
+    def shoot(self):
+        Bullet(self.rect.x, self.rect.y, 19, 15, self.all_sprites)
+        Bullet(self.rect.x, self.rect.y, 47, 15, self.all_sprites)
 
     def update(self):
-        self.rect.top -= 10
+        self.rect.bottom += self.speed
 
 
-class Player(PlayerAnimatedSprite):
+class Bullet(pygame.sprite.Sprite):
+    BULLET_COLOR = (255, 255, 51)
+    BULLET_SPEED = 10
+
+    def __init__(self, x, y, offset_x, offset_y, all_sprites):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface([3, 10])
+        pygame.draw.rect(self.image, Bullet.BULLET_COLOR, pygame.Rect(0, 0, 3, 10))
+        self.rect = self.image.get_rect()
+        self.rect.x = x + offset_x
+        self.rect.y = y + offset_y
+
+    def update(self):
+        self.rect.top -= Bullet.BULLET_SPEED
+
+
+class Player(AnimatedSprite):
     image = load_image(PLAYER_SPRITE)
     MAX_SPEED = 10
 
@@ -76,7 +103,8 @@ class Player(PlayerAnimatedSprite):
     def shoot(self):
         if self.bullet_count > 0:
             self.bullet_count -= 1
-            Bullet(self.rect.x, self.rect.y, self.all_sprites)
+            Bullet(self.rect.x, self.rect.y, 19, 15, self.all_sprites)
+            Bullet(self.rect.x, self.rect.y, 47, 15, self.all_sprites)
             print('shoot ')
 
     def check_max_speed(self):
@@ -126,6 +154,15 @@ class Game:
         self.all_sprites = pygame.sprite.Group()
         self.screen = screen
         self.player_key = None
+        self.player_shoot_key = None
+
+        self.player_clock = pygame.time.Clock()
+        self.current_tick = 0
+
+        self.enemy_spawn_clock = pygame.time.Clock()
+        self.enemy_spawn_tick = 0
+
+        self.enemy_spawn()
 
     def keys_handler(self, key, ev_type):
         if key[pygame.K_d] and ev_type == pygame.KEYDOWN:
@@ -138,17 +175,28 @@ class Game:
             self.player_key = 0
         if ev_type == pygame.KEYUP and not key[pygame.K_a] and not key[pygame.K_d]:
             self.player_key = None
-        if ev_type == pygame.KEYDOWN and key[pygame.K_SPACE]:
-            self.player.shoot()
+        if key[pygame.K_SPACE] and ev_type == pygame.KEYDOWN:
+            self.player_shoot_key = 1
+        if not key[pygame.K_SPACE] and ev_type == pygame.KEYUP:
+            self.player_shoot_key = None
 
     def start_game(self):
         self.player = Player(sheet=load_image(PLAYER_ANIMATION), columns=PLAYER_ANIMATION_COLUMNS,
                              rows=PLAYER_ANIMATION_ROWS, x=50, y=50, acceleration=(0.5, 0.5),
-                             bullet_count=50, all_sprites=self.all_sprites)
+                             bullet_count=100, all_sprites=self.all_sprites)
         self.all_sprites.add(self.player)
+        # EnemyFirst(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, 6, self.all_sprites)
+
+    def enemy_spawn(self):
+        self.enemy_spawn_tick += self.enemy_spawn_clock.tick()
+        enemy_spawn_max_tick = random.randint(500, 1500)
+        if self.enemy_spawn_tick > enemy_spawn_max_tick:
+            enemy_x = random.randint(20, WINDOW_SIZE[0] - 20)
+            EnemyFirst(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, enemy_x, 6, self.all_sprites)
+            self.enemy_spawn_tick = 0
 
     def render(self):
-        self.screen.fill(pygame.Color(255, 255, 255))
+        self.screen.fill(pygame.Color(0, 200, 0))
         self.all_sprites.update()
         self.all_sprites.draw(self.screen)
 
@@ -160,6 +208,13 @@ class Game:
             self.player.accelerate_left()
         else:
             self.player.auto_acceleration_stop()
+
+        if self.player_shoot_key == 1:
+            self.current_tick += self.player_clock.tick()
+            if self.current_tick > 300:
+                self.player.shoot()
+                self.current_tick = 0
+
         self.player.move()
 
 
@@ -182,8 +237,9 @@ if __name__ == '__main__':
             game.keys_handler(key, ev_type)
 
         game.player_physic()
+        game.enemy_spawn()
         game.render()
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FPS)
 
     pygame.quit()
