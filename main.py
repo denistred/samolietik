@@ -70,6 +70,7 @@ class EnemyFirst(AnimatedSprite):
             self.kill()
 
     def update(self):
+        super().update()
         self.rect.bottom += self.speed
         self.destroy()
 
@@ -199,7 +200,7 @@ class Game:
 
     def enemy_spawn(self):
         self.enemy_spawn_tick += self.enemy_spawn_clock.tick()
-        enemy_spawn_max_tick = random.randint(500, 1500)
+        enemy_spawn_max_tick = random.randint(250, 750)
         if self.enemy_spawn_tick > enemy_spawn_max_tick:
             enemy_x = random.randint(20, WINDOW_SIZE[0] - 20)
             EnemyFirst(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, enemy_x, 6)
