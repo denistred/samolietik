@@ -1,0 +1,10 @@
+FPS = 60
+WINDOW_SIZE = (500, 800)
+PLAYER_ANIMATION_COLUMNS = 4
+PLAYER_ANIMATION_ROWS = 1
+ENEMY_FIRST_ANIMATION = 'GER_He111_animation.png'
+EXPLOSION_ANIMATION = 'Explosion.png'
+PLAYER_SPRITE = 'player_plane.png'
+PLAYER_ANIMATION = 'player_animation.png'
+TREE_SPRITE = 'tree.png'
+WOODS_MENU_BUTTON = 'woods_menu_button.png'
