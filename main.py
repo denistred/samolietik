@@ -1,3 +1,3 @@
-from source.level_and_main import game_cycle
+from source.game import game_cycle
 
 game_cycle()
