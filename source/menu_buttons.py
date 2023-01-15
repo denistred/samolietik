@@ -1,5 +1,5 @@
 import pygame
-from source.settings import WOODS_MENU_BUTTON
+from source.settings import WOODS_MENU_BUTTON, DESERT_MENU_BUTTON
 from source.load_image import load_image
 
 
@@ -10,4 +10,14 @@ class WoodsButton(pygame.sprite.Sprite):
         super().__init__(button_group)
         self.rect = self.image.get_rect()
         self.rect.bottom = 300
+        self.rect.left = 125
+
+
+class DesertButton(pygame.sprite.Sprite):
+    image = load_image(DESERT_MENU_BUTTON)
+
+    def __init__(self, button_group):
+        super().__init__(button_group)
+        self.rect = self.image.get_rect()
+        self.rect.bottom = 600
         self.rect.left = 125

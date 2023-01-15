@@ -1,5 +1,4 @@
 import random
-
 import pygame
 
 from source.enemy_one import EnemyOne
@@ -7,8 +6,9 @@ from source.load_image import load_image
 from source.settings import WINDOW_SIZE, PLAYER_ANIMATION, FPS, ENEMY_FIRST_ANIMATION, \
     PLAYER_ANIMATION_COLUMNS, PLAYER_ANIMATION_ROWS
 from source.player import Player
-from source.menu_buttons import WoodsButton
+from source.menu_buttons import WoodsButton, DesertButton
 from source.Tree import Tree
+from source.bush import Bush
 
 bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
@@ -16,16 +16,14 @@ player_group = pygame.sprite.Group()
 tree_group = pygame.sprite.Group()
 bonus_group = pygame.sprite.Group()
 explosion_group = pygame.sprite.Group()
-
-
-
+bush_group = pygame.sprite.Group()
 
 
 class LevelWoods:
-    def __init__(self, screen):
+    def __init__(self, screen, level_code):  # 0 - woods 1 - desert
         self.all_sprites = pygame.sprite.Group()
-
         self.screen = screen
+        self.level_id = level_code
 
         self.score = 0
 
@@ -42,10 +40,21 @@ class LevelWoods:
         self.enemy_spawn_max_tick = 250
         self.enemy_speed = 6
 
-        self.trees_spawn_clock = pygame.time.Clock()
-        self.trees_spawn_tick = 0
         self.start_game()
         self.enemy_spawn()
+
+        if self.level_id:
+            self.desert_background()
+        else:
+            self.woods_background()
+
+    def woods_background(self):
+        self.trees_spawn_clock = pygame.time.Clock()
+        self.trees_spawn_tick = 0
+
+    def desert_background(self):
+        self.bush_spawn_clock = pygame.time.Clock()
+        self.bush_spawn_tick = 0
 
     def keys_handler(self, key, ev_type):
         if key[pygame.K_d] and ev_type == pygame.KEYDOWN:
@@ -104,6 +113,13 @@ class LevelWoods:
                 Tree(tree_group)
                 self.trees_spawn_tick = 0
 
+    def bush_spawn(self):
+        if not self.stop:
+            self.bush_spawn_tick += self.bush_spawn_clock.tick()
+            if self.bush_spawn_tick > 100:
+                Bush(bush_group)
+                self.bush_spawn_tick = 0
+
     def player_physic(self):
         if self.player_key == 0:
             self.player.accelerate_right()
@@ -128,11 +144,16 @@ class LevelWoods:
                 self.current_tick = 0
 
     def render(self):
-        self.screen.fill(pygame.Color(0, 200, 0))
+        if self.level_id:
+            self.screen.fill(pygame.Color(222, 160, 44))
+            bush_group.update()
+            bush_group.draw(self.screen)
+        else:
+            self.screen.fill(pygame.Color(0, 200, 0))
+            tree_group.update()
+            tree_group.draw(self.screen)
         self.all_sprites.update()
         self.all_sprites.draw(self.screen)
-        tree_group.update()
-        tree_group.draw(self.screen)
         bullet_group.update()
         bullet_group.draw(self.screen)
         enemy_group.update(bullet_group)
@@ -151,6 +172,8 @@ class LevelWoods:
                 tree.stop()
             for enemy in enemy_group:
                 enemy.stop()
+            for bush in bush_group:
+                bush.stop()
             self.player.stop()
 
     def stop_game(self):
@@ -172,6 +195,7 @@ class Game:
         self.screen = screen
         self.button_group = pygame.sprite.Group()
         self.woods_button = WoodsButton(self.button_group)
+        self.desert_button = DesertButton(self.button_group)
 
         self.check_player_alive_clock = pygame.time.Clock()
         self.check_player_alive_tick = 0
@@ -184,6 +208,8 @@ class Game:
         font = pygame.font.Font(None, 36)
         text = font.render(f'Max score: {self.max_score}', True, (255, 255, 255))
         self.screen.blit(text, (140, 250))
+        text = font.render(f'Max score: {self.max_score}', True, (255, 255, 255))
+        self.screen.blit(text, (140, 550))
 
     def draw_end_screen(self):
         pygame.draw.rect(self.screen, (160, 160, 160), (100, 200, 300, 100))
@@ -200,7 +226,9 @@ class Game:
 
     def check_position(self, point):
         if self.woods_button.rect.collidepoint(point):
-            self.level = LevelWoods(self.screen)
+            self.level = LevelWoods(self.screen, 0)
+        elif self.desert_button.rect.collidepoint(point):
+            self.level = LevelWoods(self.screen, 1)
 
     def check_player_alive(self):
         if not self.level.player.alive():
@@ -214,7 +242,6 @@ class Game:
         else:
             self.check_player_alive_clock.tick()
 
-
     def render(self):
         if self.level == None:
             self.screen.fill((160, 160, 160))
@@ -222,7 +249,15 @@ class Game:
             self.button_group.draw(self.screen)
             self.draw_score_text()
 
-        elif self.level.__class__.__name__ == 'LevelWoods':
+        elif self.level.level_id:
+            self.level.player_physic()
+            self.level.enemy_spawn()
+            self.level.bush_spawn()
+            self.level.player_logic()
+            self.level.render()
+            self.check_player_alive()
+
+        elif not self.level.level_id:
             self.level.player_physic()
             self.level.enemy_spawn()
             self.level.trees_spawn()
