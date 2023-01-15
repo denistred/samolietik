@@ -4,7 +4,8 @@ import pygame
 from source.enemy_one import EnemyOne
 from source.load_image import load_image
 from source.settings import WINDOW_SIZE, PLAYER_ANIMATION, ENEMY_FIRST_ANIMATION, \
-    PLAYER_ANIMATION_COLUMNS, PLAYER_ANIMATION_ROWS
+    PLAYER_ANIMATION_COLUMNS, PLAYER_ANIMATION_ROWS, ENEMY_MIN_SPAWN_TICK, ENEMY_SPAWN_TICK_CHANGE, \
+    ENEMY_MAX_SPEED, ENEMY_SPEED_CHANGE, ENEMY_START_SPAWN_TICK, ENEMY_START_SPEED
 from source.player import Player
 from source.Tree import Tree
 from source.bush import Bush
@@ -16,6 +17,8 @@ tree_group = pygame.sprite.Group()
 bonus_group = pygame.sprite.Group()
 explosion_group = pygame.sprite.Group()
 bush_group = pygame.sprite.Group()
+
+
 
 
 class Levels:
@@ -36,8 +39,8 @@ class Levels:
 
         self.enemy_spawn_clock = pygame.time.Clock()
         self.enemy_spawn_tick = 0
-        self.enemy_spawn_max_tick = 250
-        self.enemy_speed = 6
+        self.enemy_spawn_max_tick = ENEMY_START_SPAWN_TICK
+        self.enemy_speed = ENEMY_START_SPEED
 
         self.start_game()
         self.enemy_spawn()
@@ -96,10 +99,10 @@ class Levels:
                 EnemyOne(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, enemy_x, self.enemy_speed,
                          enemy_group, explosion_group, bonus_group)
                 self.enemy_spawn_tick = 0
-                if self.enemy_spawn_max_tick > 70:
-                    self.enemy_spawn_max_tick -= 0.5
-                if self.enemy_speed < 11:
-                    self.enemy_speed += 0.01
+                if self.enemy_spawn_max_tick > ENEMY_MIN_SPAWN_TICK:
+                    self.enemy_spawn_max_tick -= ENEMY_SPAWN_TICK_CHANGE
+                if self.enemy_speed < ENEMY_MAX_SPEED:
+                    self.enemy_speed += ENEMY_SPEED_CHANGE
 
                 if not self.stop:
                     self.score += 10
