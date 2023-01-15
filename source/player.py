@@ -1,14 +1,11 @@
 import pygame
-import sys
 
-from source.settings import PLAYER_SPRITE, WINDOW_SIZE
+from source.settings import WINDOW_SIZE
 from source.animated_sprite import AnimatedSprite
-from source.load_image import load_image
 from source.bullet import Bullet
 
 
 class Player(AnimatedSprite):
-    image = load_image(PLAYER_SPRITE)
     MAX_SPEED = 10
 
     def __init__(self, sheet, columns, rows, x, y, acceleration, bullet_count, player_group, bullet_group):
@@ -47,17 +44,6 @@ class Player(AnimatedSprite):
         self.check_max_speed()
 
     def auto_acceleration_stop(self):
-        # if self.velocity[0] > 0:
-        #     if self.velocity[0] - math.sqrt(abs(self.velocity[0])) > 0:
-        #         self.velocity[0] -= math.sqrt(abs(self.velocity[0]))
-        #     else:
-        #         self.velocity[0] -= self.velocity[0]
-        #
-        # elif self.velocity[0] < 0:
-        #     if self.velocity[0] + math.sqrt(abs(self.velocity[0])) < 0:
-        #         self.velocity[0] += math.sqrt(abs(self.velocity[0]))
-        #     else:
-        #         self.velocity[0] -= self.velocity[0]
         self.velocity[0] = 0
 
     def check_position(self):
@@ -84,8 +70,6 @@ class Player(AnimatedSprite):
         if not self.is_stopped:
             self.rect.right += self.velocity[0]
         self.check_position()
-        # self.collision_check()
-        # self.pick_up_bonus()
 
     def stop(self):
         self.is_stopped = True

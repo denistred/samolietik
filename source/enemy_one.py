@@ -6,10 +6,12 @@ from source.explosion import Explosion
 from source.settings import EXPLOSION_ANIMATION, ENEMY_FIRST_ANIMATION
 from source.bonus_ammo import BonusBullet
 
+
 class EnemyOne(AnimatedSprite):
     image = load_image(ENEMY_FIRST_ANIMATION)
 
-    def __init__(self, sheet, columns, rows, x, y, spawn_x, speed, enemy_group, explosion_group, bonus_group):
+    def __init__(self, sheet, columns, rows, x, y, spawn_x, speed, enemy_group, explosion_group,
+                 bonus_group):
         super().__init__(sheet, columns, rows, x, y, enemy_group)
         self.rect = self.image.get_rect()
         self.rect.bottom = -50
