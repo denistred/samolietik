@@ -13,11 +13,13 @@ class Handler:
         self.cur = self.con.cursor()
 
     def get_score(self, level_id):
-        score = self.cur.execute(f'''SELECT max_score FROM level_max_score WHERE id={level_id}''').fetchall()
+        score = self.cur.execute(
+            f'''SELECT max_score FROM level_max_score WHERE id={level_id}''').fetchall()
         return score[0][0]
 
     def save_result(self, level_id, result):
         prev_result = self.get_score(level_id)
         if result > prev_result:
-            self.cur.execute(f'''UPDATE level_max_score SET max_score={result} WHERE id={level_id} ''')
+            self.cur.execute(
+                f'''UPDATE level_max_score SET max_score={result} WHERE id={level_id} ''')
             self.con.commit()

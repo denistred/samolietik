@@ -1,7 +1,7 @@
 import random
 import pygame
 
-from source.enemy_one import EnemyOne
+from source.enemy_one import Enemy
 from source.load_image import load_image
 from source.settings import WINDOW_SIZE, PLAYER_ANIMATION, ENEMY_FIRST_ANIMATION, \
     PLAYER_ANIMATION_COLUMNS, PLAYER_ANIMATION_ROWS, ENEMY_MIN_SPAWN_TICK, ENEMY_SPAWN_TICK_CHANGE, \
@@ -17,8 +17,6 @@ tree_group = pygame.sprite.Group()
 bonus_group = pygame.sprite.Group()
 explosion_group = pygame.sprite.Group()
 bush_group = pygame.sprite.Group()
-
-
 
 
 class Levels:
@@ -96,8 +94,8 @@ class Levels:
             self.enemy_spawn_tick += self.enemy_spawn_clock.tick()
             if self.enemy_spawn_tick > self.enemy_spawn_max_tick:
                 enemy_x = random.randint(20, WINDOW_SIZE[0] - 20)
-                EnemyOne(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, enemy_x, self.enemy_speed,
-                         enemy_group, explosion_group, bonus_group)
+                Enemy(load_image(ENEMY_FIRST_ANIMATION), 4, 1, 50, 50, enemy_x, self.enemy_speed,
+                      enemy_group, explosion_group, bonus_group)
                 self.enemy_spawn_tick = 0
                 if self.enemy_spawn_max_tick > ENEMY_MIN_SPAWN_TICK:
                     self.enemy_spawn_max_tick -= ENEMY_SPAWN_TICK_CHANGE
@@ -106,7 +104,6 @@ class Levels:
 
                 if not self.stop:
                     self.score += 10
-                print(self.enemy_spawn_max_tick, self.enemy_speed)
 
     def trees_spawn(self):
         if not self.stop:
@@ -145,6 +142,19 @@ class Levels:
                 self.player.shoot()
                 self.current_tick = 0
 
+    def stop_all_object(self):
+        if self.stop:
+            for bonus in bonus_group:
+                bonus.stop()
+            for tree in tree_group:
+                tree.stop()
+            for enemy in enemy_group:
+                enemy.stop()
+            for bush in bush_group:
+                bush.stop()
+            self.player.stop()
+            self.stop_game()
+
     def render(self):
         if self.level_id:
             self.screen.fill(pygame.Color(222, 160, 44))
@@ -167,16 +177,7 @@ class Levels:
         bonus_group.update()
         bonus_group.draw(self.screen)
         self.draw_bottom_gui(self.screen)
-        if self.stop:
-            for bonus in bonus_group:
-                bonus.stop()
-            for tree in tree_group:
-                tree.stop()
-            for enemy in enemy_group:
-                enemy.stop()
-            for bush in bush_group:
-                bush.stop()
-            self.player.stop()
+        self.stop_all_object()
 
     def stop_game(self):
         self.stop = True
@@ -192,4 +193,3 @@ class Levels:
             bullet.kill()
         for bush in bush_group:
             bush.kill()
-

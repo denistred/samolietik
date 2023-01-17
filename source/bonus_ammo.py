@@ -1,6 +1,7 @@
 import pygame
 from source.load_image import load_image
 
+
 class BonusBullet(pygame.sprite.Sprite):
     image = load_image('bonus_bullets.png')
 

@@ -7,7 +7,7 @@ from source.settings import EXPLOSION_ANIMATION, ENEMY_FIRST_ANIMATION
 from source.bonus_ammo import BonusBullet
 
 
-class EnemyOne(AnimatedSprite):
+class Enemy(AnimatedSprite):
     image = load_image(ENEMY_FIRST_ANIMATION)
 
     def __init__(self, sheet, columns, rows, x, y, spawn_x, speed, enemy_group, explosion_group,

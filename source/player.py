@@ -8,7 +8,8 @@ from source.bullet import Bullet
 class Player(AnimatedSprite):
     MAX_SPEED = 10
 
-    def __init__(self, sheet, columns, rows, x, y, acceleration, bullet_count, player_group, bullet_group):
+    def __init__(self, sheet, columns, rows, x, y, acceleration, bullet_count, player_group,
+                 bullet_group):
         super().__init__(sheet, columns, rows, x, y, player_group)
         self.rect = self.image.get_rect()
         self.rect.bottom = WINDOW_SIZE[1] - 100
